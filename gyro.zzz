@@ -1,0 +1,21 @@
+pkgs:
+  zigvale:
+    version: 0.1.0
+    root: zigvale.zig
+    description: A Zig implementation of the stivale2 boot protocol.
+    license: mit
+    source_url: "https://github.com/ominitay/zigvale"
+
+    tags:
+      boot
+      bootloader
+      kernel
+      stivale
+      stivale2
+      osdev
+
+    files:
+      LICENSE
+      README.md
+      zigvale.zig
+      src/*
