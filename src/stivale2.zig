@@ -168,7 +168,7 @@ pub const Struct = packed struct {
     /// Null terminated ASCII string
     bootloader_version: [64]u8,
     /// Pointer to the first tag of the linked list of tags.
-    tags: ?*Tag,
+    tags: ?*Tag = null,
 
     pub const Tag = TagGeneric(Identifier);
 
@@ -178,9 +178,9 @@ pub const Struct = packed struct {
         cmdline = 0xe5e76a1b4597a781,
         memmap = 0x2187f79e8612de07,
         framebuffer = 0x506461d2950408fa,
+        framebuffer_mtrr = 0x6bc1a78ebe871172,
         textmode = 0x38d74c23e0dca893,
         edid = 0x968609d7af96b845,
-        framebuffer_mtrr = 0x6bc1a78ebe871172,
         terminal = 0xc2b3f4c3233b0974,
         modules = 0x4b6fe466aade04ce,
         rsdp = 0x9e1786930a375e78,
@@ -198,6 +198,68 @@ pub const Struct = packed struct {
         vmap = 0xb0ed257db18cb58f,
         _,
     };
+
+    /// This struct contains all detected tags, returned by `Struct.parse()`
+    pub const Parsed = struct {
+        pmrs: ?*PmrsTag = null,
+        cmdline: ?*CmdlineTag = null,
+        memmap: ?*MemmapTag = null,
+        framebuffer: ?*FramebufferTag = null,
+        framebuffer_mtrr: ?*FramebufferMtrrTag = null,
+        textmode: ?*TextModeTag = null,
+        edid: ?*EdidTag = null,
+        terminal: ?*TerminalTag = null,
+        modules: ?*ModulesTag = null,
+        rsdp: ?*RsdpTag = null,
+        smbios: ?*SmbiosTag = null,
+        epoch: ?*EpochTag = null,
+        firmware: ?*FirmwareTag = null,
+        efi_system_table: ?*EfiSystemTableTag = null,
+        kernel_file: ?*KernelFileTag = null,
+        kernel_file_v2: ?*KernelFileV2Tag = null,
+        kernel_slide: ?*KernelSlideTag = null,
+        smp: ?*SmpTag = null,
+        pxe_server_info: ?*PxeServerInfoTag = null,
+        mmio32_uart: ?*Mmio32UartTag = null,
+        dtb: ?*DtbTag = null,
+        vmap: ?*VmapTag = null,
+    };
+
+    /// Returns `Struct.Parsed`, filled with all detected tags
+    pub fn parse(self: *const Struct) Parsed {
+        var parsed = Parsed{};
+
+        var tag_opt = self.tags;
+        while (tag_opt) |tag| : (tag_opt = tag.next) {
+            switch (tag.identifier) {
+                .pmrs => parsed.pmrs = @ptrCast(*PmrsTag, tag),
+                .cmdline => parsed.cmdline = @ptrCast(*CmdlineTag, tag),
+                .memmap => parsed.memmap = @ptrCast(*MemmapTag, tag),
+                .framebuffer => parsed.framebuffer = @ptrCast(*FramebufferTag, tag),
+                .framebuffer_mtrr => parsed.framebuffer_mtrr = @ptrCast(*FramebufferMtrrTag, tag),
+                .textmode => parsed.textmode = @ptrCast(*TextModeTag, tag),
+                .edid => parsed.edid = @ptrCast(*EdidTag, tag),
+                .terminal => parsed.terminal = @ptrCast(*TerminalTag, tag),
+                .modules => parsed.modules = @ptrCast(*ModulesTag, tag),
+                .rsdp => parsed.rsdp = @ptrCast(*RsdpTag, tag),
+                .smbios => parsed.smbios = @ptrCast(*SmbiosTag, tag),
+                .epoch => parsed.epoch = @ptrCast(*EpochTag, tag),
+                .firmware => parsed.firmware = @ptrCast(*FirmwareTag, tag),
+                .efi_system_table => parsed.efi_system_table = @ptrCast(*EfiSystemTableTag, tag),
+                .kernel_file => parsed.kernel_file = @ptrCast(*KernelFileTag, tag),
+                .kernel_file_v2 => parsed.kernel_file_v2 = @ptrCast(*KernelFileV2Tag, tag),
+                .kernel_slide => parsed.kernel_slide = @ptrCast(*KernelSlideTag, tag),
+                .smp => parsed.smp = @ptrCast(*SmpTag, tag),
+                .pxe_server_info => parsed.pxe_server_info = @ptrCast(*PxeServerInfoTag, tag),
+                .mmio32_uart => parsed.mmio32_uart = @ptrCast(*Mmio32UartTag, tag),
+                .dtb => parsed.dtb = @ptrCast(*DtbTag, tag),
+                .vmap => parsed.vmap = @ptrCast(*VmapTag, tag),
+                _ => {}, // Ignore unknown tags
+            }
+        }
+
+        return parsed;
+    }
 
     /// This tag tells the kernel that th4e PMR flag in the header was recognised and that the kernel has been
     /// successfully mapped by its ELF segments. It also provides the array of ranges and their corresponding
@@ -530,4 +592,16 @@ test "Struct Other Sizes" {
     try expect(@bitSizeOf(Struct.MemmapEntry) == 192);
     try expect(@bitSizeOf(Struct.Module) == 1152);
     try expect(@bitSizeOf(Struct.SmpInfo) == 256);
+}
+
+test "Parse Struct" {
+    var info = Struct{
+        .bootloader_brand = [1]u8{0} ** 64,
+        .bootloader_version = [1]u8{0} ** 64,
+    };
+    var epochtag = Struct.EpochTag{ .epoch = 0x6969696969696969 };
+    info.tags = &epochtag.tag;
+
+    const parsed = info.parse();
+    try expect(parsed.epoch.?.*.epoch == 0x6969696969696969);
 }
