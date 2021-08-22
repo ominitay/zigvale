@@ -2,6 +2,31 @@
 
 Zigvale is a Zig implementation of the stivale2 boot protocol to be used both in kernels and bootloaders. The specification, along with C header files, may be found [here](https://github.com/stivale/stivale).
 
+## Add to your project
+
+Zigvale is available on [aquila](https://aquila.red/1/Ominitay/zigvale), [zpm](https://zig.pm/#/package/zigvale), and [astrolabe](https://astrolabe.pm/#/package/Ominitay/zigvale/0.1.0).
+
+### Gyro
+
+`gyro add Ominitay/zigvale`
+
+### Zigmod
+###### Aquila
+`zigmod aq add 1/Ominitay/zigvale`
+
+###### ZPM
+`zigmod zpm add zigvale`
+
+### ZKG
+
+`zkg add zigvale`
+
+### Git
+###### Submodule
+`git submodule add https://github.com/ominitay/zigvale zigvale`
+
+###### Clone
+`git clone https://github.com/ominitay/zigvale`
 
 ```
 
