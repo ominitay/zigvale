@@ -44,7 +44,7 @@ pub const Header = packed struct {
     entry_point: u64 = 0,
     /// The stack address which will be in ESP/RSP when the kernel is loaded.
     /// The stack must be at least 256 bytes, and must have a 16 byte aligned address.
-    stack: u64,
+    stack: ?*u8,
     flags: Flags,
     /// Pointer to the first tag of the linked list of header tags.
     tags: ?*Tag,
