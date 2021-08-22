@@ -28,6 +28,34 @@ Zigvale is available on [aquila](https://aquila.red/1/Ominitay/zigvale), [zpm](h
 ###### Clone
 `git clone https://github.com/ominitay/zigvale`
 
+## Example
+
+Presently, to work around [zig#9512](https://github.com/ziglang/zig/issues/9512), we have to define our stack as a sentinel-terminated array, since Zig does not allow us to do maths on link-time known pointers. 
+
+```zig
+const zigvale = @import("zigvale").v2;
+
+export var stack_bytes: [16 * 1024:0]u8 align(16) linksection(".bss") = undefined;
+const stack_bytes_slice = stack_bytes[0..];
+
+
+export const header linksection(".stivale2hdr") = zigvale.Header{
+    .stack = &stack_bytes[stack_bytes.len],
+    .flags = .{
+        .higher_half = 1,
+        .pmr = 1,
+    },
+    .tags = null,
+};
+
+comptime {
+    const entry = zigvale.entryPoint(kmain);
+    @export(entry, .{ .name = "_start", .linkage = .Strong });
+}
+
+pub fn kmain(_: *zigvale.Struct.Parsed) noreturn {
+    while (true) {}
+}
 ```
 
 ## Documentation
