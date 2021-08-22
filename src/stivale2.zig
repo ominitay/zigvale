@@ -605,3 +605,24 @@ test "Parse Struct" {
     const parsed = info.parse();
     try expect(parsed.epoch.?.*.epoch == 0x6969696969696969);
 }
+
+/// This function takes your kernel entry point as an argument. It parses the `Struct` for you, and provides `Struct.Parsed` as an argument to the
+/// entry point. You may export it as `_start` using `@export`.
+pub fn entryPoint(comptime entrypoint: fn (*Struct.Parsed) noreturn) fn (*Struct) callconv(.C) noreturn {
+    return struct {
+        pub fn entryPoint(info: *Struct) callconv(.C) noreturn {
+            var parsed = info.parse();
+            entrypoint(&parsed);
+        }
+    }.entryPoint;
+}
+
+test "entryPoint" {
+    const kmain = struct {
+        pub fn kmain(_: *Struct.Parsed) noreturn {
+            while (true) {}
+        }
+    }.kmain;
+
+    _ = entryPoint(kmain);
+}
