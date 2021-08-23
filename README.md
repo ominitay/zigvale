@@ -30,7 +30,7 @@ Zigvale is available on [aquila](https://aquila.red/1/Ominitay/zigvale), [zpm](h
 
 ## Example
 
-Presently, to work around [zig#9512](https://github.com/ziglang/zig/issues/9512), we have to define our stack as a sentinel-terminated array, since Zig does not allow us to do maths on link-time known pointers. 
+Due to a limitation in Zig ([zig#9512](https://github.com/ziglang/zig/issues/9512)), we define our stack as a sentinel-terminated array, allowing us to point to the end of the stack. This workaround won't be needed when [zig#9512](https://github.com/ziglang/zig/issues/9512) is resolved. 
 
 ```zig
 const zigvale = @import("zigvale").v2;
