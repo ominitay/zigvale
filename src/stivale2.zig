@@ -201,6 +201,8 @@ pub const Struct = packed struct {
 
     /// This struct contains all detected tags, returned by `Struct.parse()`
     pub const Parsed = struct {
+        bootloader_brand: []const u8,
+        bootloader_version: []const u8,
         pmrs: ?*PmrsTag = null,
         cmdline: ?*CmdlineTag = null,
         memmap: ?*MemmapTag = null,
@@ -227,7 +229,10 @@ pub const Struct = packed struct {
 
     /// Returns `Struct.Parsed`, filled with all detected tags
     pub fn parse(self: *const Struct) Parsed {
-        var parsed = Parsed{};
+        var parsed = Parsed{
+            .bootloader_brand = std.mem.sliceTo(&self.bootloader_brand, 0),
+            .bootloader_version = std.mem.sliceTo(&self.bootloader_version, 0),
+        };
 
         var tag_opt = self.tags;
         while (tag_opt) |tag| : (tag_opt = tag.next) {
@@ -594,16 +599,29 @@ test "Struct Other Sizes" {
     try expect(@bitSizeOf(Struct.SmpInfo) == 256);
 }
 
+// We use this only as a helper for our test
+fn padString(comptime string: anytype, comptime len: usize) [len]u8 {
+    comptime {
+        if (string.len >= len) unreachable;
+        const paddingLen = len - string.len;
+        const padding = [1]u8{0} ** paddingLen;
+        return string ++ padding;
+    }
+}
+
 test "Parse Struct" {
     var info = Struct{
-        .bootloader_brand = [1]u8{0} ** 64,
-        .bootloader_version = [1]u8{0} ** 64,
+        .bootloader_brand = padString("Foo...".*, 64),
+        .bootloader_version = padString("Bar!".*, 64),
     };
+
     var epochtag = Struct.EpochTag{ .epoch = 0x6969696969696969 };
     info.tags = &epochtag.tag;
 
     const parsed = info.parse();
     try expect(parsed.epoch.?.*.epoch == 0x6969696969696969);
+    try expect(std.mem.eql(u8, parsed.bootloader_brand, "Foo..."));
+    try expect(std.mem.eql(u8, parsed.bootloader_version, "Bar!"));
 }
 
 /// This function takes your kernel entry point as an argument. It parses the `Struct` for you, and provides `Struct.Parsed` as an argument to the
