@@ -1,6 +1,6 @@
 pkgs:
   zigvale:
-    version: 0.1.0
+    version: 0.1.1
     root: zigvale.zig
     description: A Zig implementation of the stivale2 boot protocol.
     license: mit
