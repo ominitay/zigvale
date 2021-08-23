@@ -8,7 +8,7 @@ Zigvale is available on [aquila](https://aquila.red/1/Ominitay/zigvale), [zpm](h
 
 ### Gyro
 
-`gyro add Ominitay/zigvale`
+`gyro add ominitay/zigvale`
 
 ### Zigmod
 ###### Aquila
