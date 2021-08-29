@@ -273,8 +273,11 @@ pub const Struct = packed struct {
         tag: Tag = .{ .identifier = .pmrs },
         /// Number of entries in array
         entries: u64,
-        /// Array of `Pmr` structs
-        pmrs: [*]Pmr,
+
+        /// Returns array of Pmr structs
+        pub fn getPmrs(self: *const PmrsTag) []Pmr {
+            return @intToPtr([*]Pmr, @ptrToInt(&self.entries) + 8)[0..self.entries];
+        }
     };
 
     pub const Pmr = packed struct {
@@ -302,8 +305,11 @@ pub const Struct = packed struct {
         tag: Tag = .{ .identifier = .memmap },
         /// Number of entries in array
         entries: u64,
-        /// Array of `MemmapEntry` structs
-        memmap: [*]MemmapEntry,
+
+        /// Returns array of `MemmapEntry` structs
+        pub fn getMemmap(self: *const MemmapTag) []MemmapEntry {
+            return @intToPtr([*]MemmapEntry, @ptrToInt(&self.entries) + 8)[0..self.entries];
+        }
     };
 
     pub const MemmapEntry = packed struct {
@@ -375,7 +381,11 @@ pub const Struct = packed struct {
         tag: Tag = .{ .identifier = .edid },
         /// The number of bytes in the array
         edid_size: u64,
-        edid_information: [*]u8,
+
+        /// Returns edid information
+        pub fn getEdidInformation(self: *const EdidTag) []const u8 {
+            return @intToPtr([*]u8, @ptrToInt(&self.edid_size) + 8)[0..self.edid_size];
+        }
     };
 
     /// This tag provides the kernel with the entry point of the `stivale2_term_write()` function, if it was
@@ -409,8 +419,11 @@ pub const Struct = packed struct {
         tag: Tag = .{ .identifier = .modules },
         /// Number of modules in the array
         module_count: u64,
-        /// Array of `Module` structs
-        modules: [*]Module,
+
+        /// Returns array of `Module` structs
+        pub fn getModules(self: *const ModulesTag) []Module {
+            return @intToPtr([*]Module, @ptrToInt(&self.module_count) + 8)[0..self.module_count];
+        }
     };
 
     pub const Module = packed struct {
@@ -502,8 +515,11 @@ pub const Struct = packed struct {
         unused: u32,
         /// Total number of logical CPUs (incl BSP)
         cpu_count: u64,
-        /// Array of `SmpInfo` structs, length is `cpu_count`
-        smp_info: [*]SmpInfo,
+
+        /// Returns array of `SmpInfo` structs
+        pub fn getSmpInfo(self: *const SmpTag) []SmpInfo {
+            return @intToPtr([*]SmpInfo, @ptrToInt(&self.cpu_count) + 8)[0..self.cpu_count];
+        }
 
         pub const Flags = packed struct {
             /// Set if x2APIC was requested, supported, and sucessfully enabled
@@ -568,15 +584,15 @@ test "Struct Size" {
 }
 
 test "Struct Tag Sizes" {
-    try expect(@bitSizeOf(Struct.PmrsTag) == 256);
+    try expect(@bitSizeOf(Struct.PmrsTag) == 192);
     try expect(@bitSizeOf(Struct.CmdlineTag) == 192);
-    try expect(@bitSizeOf(Struct.MemmapTag) == 256);
+    try expect(@bitSizeOf(Struct.MemmapTag) == 192);
     try expect(@bitSizeOf(Struct.FramebufferTag) == 320);
     try expect(@bitSizeOf(Struct.FramebufferMtrrTag) == 128);
     try expect(@bitSizeOf(Struct.TextModeTag) == 256);
-    try expect(@bitSizeOf(Struct.EdidTag) == 256);
+    try expect(@bitSizeOf(Struct.EdidTag) == 192);
     try expect(@bitSizeOf(Struct.TerminalTag) == 320);
-    try expect(@bitSizeOf(Struct.ModulesTag) == 256);
+    try expect(@bitSizeOf(Struct.ModulesTag) == 192);
     try expect(@bitSizeOf(Struct.RsdpTag) == 192);
     try expect(@bitSizeOf(Struct.SmbiosTag) == 320);
     try expect(@bitSizeOf(Struct.EpochTag) == 192);
@@ -585,7 +601,7 @@ test "Struct Tag Sizes" {
     try expect(@bitSizeOf(Struct.KernelFileTag) == 192);
     try expect(@bitSizeOf(Struct.KernelFileV2Tag) == 256);
     try expect(@bitSizeOf(Struct.KernelSlideTag) == 192);
-    try expect(@bitSizeOf(Struct.SmpTag) == 384);
+    try expect(@bitSizeOf(Struct.SmpTag) == 320);
     try expect(@bitSizeOf(Struct.PxeServerInfoTag) == 160);
     try expect(@bitSizeOf(Struct.Mmio32UartTag) == 192);
     try expect(@bitSizeOf(Struct.DtbTag) == 256);
