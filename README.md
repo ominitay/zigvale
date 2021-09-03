@@ -4,7 +4,7 @@ Zigvale is a Zig implementation of the stivale2 boot protocol to be used both in
 
 ## Add to your project
 
-Zigvale is available on [aquila](https://aquila.red/1/Ominitay/zigvale), [zpm](https://zig.pm/#/package/zigvale), and [astrolabe](https://astrolabe.pm/#/package/ominitay/zigvale/0.2.0).
+Zigvale is available on [aquila](https://aquila.red/1/Ominitay/zigvale), [zpm](https://zig.pm/#/package/zigvale), and [astrolabe](https://astrolabe.pm/#/package/ominitay/zigvale/0.2.1).
 
 ### Gyro
 
