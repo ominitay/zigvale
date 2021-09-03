@@ -535,7 +535,7 @@ pub const Struct = packed struct {
 
     pub const SmpInfo = packed struct {
         /// ACPI processor UID as specified by MADT
-        acpi_processor_uid: u32,
+        processor_id: u32,
         /// LAPIC ID as specified by MADT
         lapic_id: u32,
         /// The stack that will be loaded in ESP/RSP once the goto_address field is loaded. This **MUST** point
