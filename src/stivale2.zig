@@ -108,7 +108,7 @@ pub const Header = packed struct {
     /// or text mode.
     pub const TerminalTag = packed struct {
         tag: Tag = .{ .identifier = .terminal },
-        flags: Flags,
+        flags: @This().Flags,
         /// Address of the terminal callback function
         callback: u64,
 
@@ -123,7 +123,7 @@ pub const Header = packed struct {
     /// This tag enables support for booting up application processors.
     pub const SmpTag = packed struct {
         tag: Tag = .{ .identifier = .smp },
-        flags: Flags,
+        flags: @This().Flags,
 
         pub const Flags = packed struct {
             /// Use xAPIC
