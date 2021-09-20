@@ -23,7 +23,7 @@ pub fn TagGeneric(comptime Id: type) type {
         /// The unique identifier of the tag
         identifier: Id,
         /// The next tag in the linked list
-        next: ?*Self = null,
+        next: ?*const Self = null,
     };
 }
 
@@ -47,7 +47,7 @@ pub const Header = packed struct {
     stack: ?*u8,
     flags: Flags,
     /// Pointer to the first tag of the linked list of header tags.
-    tags: ?*Tag,
+    tags: ?*const Tag,
 
     pub const Flags = packed struct {
         /// Reserved and unused
@@ -168,7 +168,7 @@ pub const Struct = packed struct {
     /// Null terminated ASCII string
     bootloader_version: [64]u8,
     /// Pointer to the first tag of the linked list of tags.
-    tags: ?*Tag = null,
+    tags: ?*const Tag = null,
 
     pub const Tag = TagGeneric(Identifier);
 
@@ -203,28 +203,28 @@ pub const Struct = packed struct {
     pub const Parsed = struct {
         bootloader_brand: []const u8,
         bootloader_version: []const u8,
-        pmrs: ?*PmrsTag = null,
-        cmdline: ?*CmdlineTag = null,
-        memmap: ?*MemmapTag = null,
-        framebuffer: ?*FramebufferTag = null,
-        framebuffer_mtrr: ?*FramebufferMtrrTag = null,
-        textmode: ?*TextModeTag = null,
-        edid: ?*EdidTag = null,
-        terminal: ?*TerminalTag = null,
-        modules: ?*ModulesTag = null,
-        rsdp: ?*RsdpTag = null,
-        smbios: ?*SmbiosTag = null,
-        epoch: ?*EpochTag = null,
-        firmware: ?*FirmwareTag = null,
-        efi_system_table: ?*EfiSystemTableTag = null,
-        kernel_file: ?*KernelFileTag = null,
-        kernel_file_v2: ?*KernelFileV2Tag = null,
-        kernel_slide: ?*KernelSlideTag = null,
-        smp: ?*SmpTag = null,
-        pxe_server_info: ?*PxeServerInfoTag = null,
-        mmio32_uart: ?*Mmio32UartTag = null,
-        dtb: ?*DtbTag = null,
-        vmap: ?*VmapTag = null,
+        pmrs: ?*const PmrsTag = null,
+        cmdline: ?*const CmdlineTag = null,
+        memmap: ?*const MemmapTag = null,
+        framebuffer: ?*const FramebufferTag = null,
+        framebuffer_mtrr: ?*const FramebufferMtrrTag = null,
+        textmode: ?*const TextModeTag = null,
+        edid: ?*const EdidTag = null,
+        terminal: ?*const TerminalTag = null,
+        modules: ?*const ModulesTag = null,
+        rsdp: ?*const RsdpTag = null,
+        smbios: ?*const SmbiosTag = null,
+        epoch: ?*const EpochTag = null,
+        firmware: ?*const FirmwareTag = null,
+        efi_system_table: ?*const EfiSystemTableTag = null,
+        kernel_file: ?*const KernelFileTag = null,
+        kernel_file_v2: ?*const KernelFileV2Tag = null,
+        kernel_slide: ?*const KernelSlideTag = null,
+        smp: ?*const SmpTag = null,
+        pxe_server_info: ?*const PxeServerInfoTag = null,
+        mmio32_uart: ?*const Mmio32UartTag = null,
+        dtb: ?*const DtbTag = null,
+        vmap: ?*const VmapTag = null,
     };
 
     /// Returns `Struct.Parsed`, filled with all detected tags
@@ -237,28 +237,28 @@ pub const Struct = packed struct {
         var tag_opt = self.tags;
         while (tag_opt) |tag| : (tag_opt = tag.next) {
             switch (tag.identifier) {
-                .pmrs => parsed.pmrs = @ptrCast(*PmrsTag, tag),
-                .cmdline => parsed.cmdline = @ptrCast(*CmdlineTag, tag),
-                .memmap => parsed.memmap = @ptrCast(*MemmapTag, tag),
-                .framebuffer => parsed.framebuffer = @ptrCast(*FramebufferTag, tag),
-                .framebuffer_mtrr => parsed.framebuffer_mtrr = @ptrCast(*FramebufferMtrrTag, tag),
-                .textmode => parsed.textmode = @ptrCast(*TextModeTag, tag),
-                .edid => parsed.edid = @ptrCast(*EdidTag, tag),
-                .terminal => parsed.terminal = @ptrCast(*TerminalTag, tag),
-                .modules => parsed.modules = @ptrCast(*ModulesTag, tag),
-                .rsdp => parsed.rsdp = @ptrCast(*RsdpTag, tag),
-                .smbios => parsed.smbios = @ptrCast(*SmbiosTag, tag),
-                .epoch => parsed.epoch = @ptrCast(*EpochTag, tag),
-                .firmware => parsed.firmware = @ptrCast(*FirmwareTag, tag),
-                .efi_system_table => parsed.efi_system_table = @ptrCast(*EfiSystemTableTag, tag),
-                .kernel_file => parsed.kernel_file = @ptrCast(*KernelFileTag, tag),
-                .kernel_file_v2 => parsed.kernel_file_v2 = @ptrCast(*KernelFileV2Tag, tag),
-                .kernel_slide => parsed.kernel_slide = @ptrCast(*KernelSlideTag, tag),
-                .smp => parsed.smp = @ptrCast(*SmpTag, tag),
-                .pxe_server_info => parsed.pxe_server_info = @ptrCast(*PxeServerInfoTag, tag),
-                .mmio32_uart => parsed.mmio32_uart = @ptrCast(*Mmio32UartTag, tag),
-                .dtb => parsed.dtb = @ptrCast(*DtbTag, tag),
-                .vmap => parsed.vmap = @ptrCast(*VmapTag, tag),
+                .pmrs => parsed.pmrs = @ptrCast(*const PmrsTag, tag),
+                .cmdline => parsed.cmdline = @ptrCast(*const CmdlineTag, tag),
+                .memmap => parsed.memmap = @ptrCast(*const MemmapTag, tag),
+                .framebuffer => parsed.framebuffer = @ptrCast(*const FramebufferTag, tag),
+                .framebuffer_mtrr => parsed.framebuffer_mtrr = @ptrCast(*const FramebufferMtrrTag, tag),
+                .textmode => parsed.textmode = @ptrCast(*const TextModeTag, tag),
+                .edid => parsed.edid = @ptrCast(*const EdidTag, tag),
+                .terminal => parsed.terminal = @ptrCast(*const TerminalTag, tag),
+                .modules => parsed.modules = @ptrCast(*const ModulesTag, tag),
+                .rsdp => parsed.rsdp = @ptrCast(*const RsdpTag, tag),
+                .smbios => parsed.smbios = @ptrCast(*const SmbiosTag, tag),
+                .epoch => parsed.epoch = @ptrCast(*const EpochTag, tag),
+                .firmware => parsed.firmware = @ptrCast(*const FirmwareTag, tag),
+                .efi_system_table => parsed.efi_system_table = @ptrCast(*const EfiSystemTableTag, tag),
+                .kernel_file => parsed.kernel_file = @ptrCast(*const KernelFileTag, tag),
+                .kernel_file_v2 => parsed.kernel_file_v2 = @ptrCast(*const KernelFileV2Tag, tag),
+                .kernel_slide => parsed.kernel_slide = @ptrCast(*const KernelSlideTag, tag),
+                .smp => parsed.smp = @ptrCast(*const SmpTag, tag),
+                .pxe_server_info => parsed.pxe_server_info = @ptrCast(*const PxeServerInfoTag, tag),
+                .mmio32_uart => parsed.mmio32_uart = @ptrCast(*const Mmio32UartTag, tag),
+                .dtb => parsed.dtb = @ptrCast(*const DtbTag, tag),
+                .vmap => parsed.vmap = @ptrCast(*const VmapTag, tag),
                 _ => {}, // Ignore unknown tags
             }
         }
@@ -642,10 +642,10 @@ test "Parse Struct" {
 
 /// This function takes your kernel entry point as an argument. It parses the `Struct` for you, and provides `Struct.Parsed` as an argument to the
 /// entry point. You may export it as `_start` using `@export`.
-pub fn entryPoint(comptime entrypoint: fn (*Struct.Parsed) noreturn) fn (*Struct) callconv(.C) noreturn {
+pub fn entryPoint(comptime entrypoint: fn (*const Struct.Parsed) noreturn) fn (*const Struct) callconv(.C) noreturn {
     return struct {
-        pub fn entryPoint(info: *Struct) callconv(.C) noreturn {
-            var parsed = info.parse();
+        pub fn entryPoint(info: *const Struct) callconv(.C) noreturn {
+            const parsed = info.parse();
             entrypoint(&parsed);
         }
     }.entryPoint;
@@ -653,7 +653,7 @@ pub fn entryPoint(comptime entrypoint: fn (*Struct.Parsed) noreturn) fn (*Struct
 
 test "entryPoint" {
     const kmain = struct {
-        pub fn kmain(_: *Struct.Parsed) noreturn {
+        pub fn kmain(_: *const Struct.Parsed) noreturn {
             while (true) {}
         }
     }.kmain;
