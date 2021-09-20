@@ -367,7 +367,7 @@ pub const Struct = packed struct {
 
     /// This tag provides the kernel with details of the currently set up CGA text mode, if any.
     pub const TextModeTag = packed struct {
-        tag: Tag = .{ .identifier = .text_mode },
+        tag: Tag = .{ .identifier = .textmode },
         /// The address of the text mode buffer
         address: u64,
         unused: u16,
