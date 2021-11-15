@@ -56,8 +56,13 @@ pub const Header = packed struct {
         higher_half: u1 = 0,
         /// If set, enables protected memory ranges.
         pmr: u1 = 0,
+        /// If set, enables fully virtual kernel mapping for PMRs.
+        fully_virtual_mapping: u1 = 0,
+        /// Do NOT fail to boot if low memory area could not be allocated. THIS SHOULD ALWAYS BE SET AS THIS
+        /// FUNCTIONALITY IS DEPRECATED.
+        boot_if_lma_fail: u1 = 1,
         /// Undefined and must be set to 0.
-        zeros: u61 = 0,
+        zeros: u59 = 0,
     };
 
     pub const Tag = TagGeneric(Identifier);
