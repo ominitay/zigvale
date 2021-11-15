@@ -1,9 +1,11 @@
 const std = @import("std");
 
 pub fn build(b: *std.build.Builder) void {
+    const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
 
     const lib_tests = b.addTest("zigvale.zig");
+    lib_tests.setTarget(target);
     lib_tests.setBuildMode(mode);
 
     const lib_test_doc = lib_tests;
