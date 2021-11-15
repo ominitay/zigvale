@@ -56,8 +56,12 @@ pub const Header = packed struct {
         higher_half: u1 = 0,
         /// If set, enables protected memory ranges.
         pmr: u1 = 0,
+        /// If set, enables fully virtual kernel mappings
+        fully_virtual_kernel: u1 = 0,
+        /// Deprecated, should always be set
+        always_set: u1 = 1,
         /// Undefined and must be set to 0.
-        zeros: u61 = 0,
+        zeros: u59 = 0,
     };
 
     pub const Tag = TagGeneric(Identifier);
