@@ -1,7 +1,6 @@
 const std = @import("std");
 const expect = std.testing.expect;
 
-const OptionalPointer = @import("pointer.zig").OptionalPointer;
 const Pointer = @import("pointer.zig").Pointer;
 
 /// Anchor for non-ELF kernels
@@ -26,7 +25,7 @@ pub fn TagGeneric(comptime Id: type) type {
         /// The unique identifier of the tag
         identifier: Id,
         /// The next tag in the linked list
-        next: OptionalPointer(*const Self) = .{ .address = 0 },
+        next: Pointer(?*const Self) = .{ .pointer = null },
     };
 }
 
@@ -40,7 +39,7 @@ test "TagGeneric" {
     try expect(@bitSizeOf(Tag) == 128);
 
     // const tag = Tag{ .identifier = .hello };
-    // try expect(tag.next.pointer() == null);
+    // try expect(tag.next.pointer == null);
 }
 
 /// The Header contains information passed from the kernel to the bootloader.
@@ -50,10 +49,10 @@ pub const Header = packed struct {
     entry_point: ?fn (*const Struct) callconv(.C) noreturn = null,
     /// The stack address which will be in ESP/RSP when the kernel is loaded.
     /// The stack must be at least 256 bytes, and must have a 16 byte aligned address.
-    stack: OptionalPointer(*u8),
+    stack: Pointer(?*u8),
     flags: Flags,
     /// Pointer to the first tag of the linked list of header tags.
-    tags: OptionalPointer(*const Tag),
+    tags: Pointer(?*const Tag),
 
     pub const Flags = packed struct {
         /// Reserved and unused
@@ -210,7 +209,7 @@ pub const Struct = packed struct {
     /// Null terminated ASCII string
     bootloader_version: [64]u8,
     /// Pointer to the first tag of the linked list of tags.
-    tags: OptionalPointer(*const Tag) = .{ .address = 0 },
+    tags: Pointer(?*const Tag) = .{ .pointer = null },
 
     pub const Tag = TagGeneric(Identifier);
 
@@ -280,8 +279,8 @@ pub const Struct = packed struct {
             .first = self.tags,
         };
 
-        var tag_opt = self.tags.pointer();
-        while (tag_opt) |tag| : (tag_opt = tag.next.pointer()) {
+        var tag_opt = self.tags.pointer;
+        while (tag_opt) |tag| : (tag_opt = tag.next.pointer) {
             switch (tag.identifier) {
                 .pmrs => parsed.pmrs = @ptrCast(*const PmrsTag, tag),
                 .cmdline => parsed.cmdline = @ptrCast(*const CmdlineTag, tag),
@@ -778,7 +777,7 @@ test "Parse Struct" {
     };
 
     var epochtag = Struct.EpochTag{ .epoch = 0x6969696969696969 };
-    info.tags.setPointer(&epochtag.tag);
+    info.tags.pointer = &epochtag.tag;
 
     const parsed = info.parse();
     try expect(parsed.epoch.?.*.epoch == 0x6969696969696969);
