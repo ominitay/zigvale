@@ -53,7 +53,7 @@ comptime {
     @export(entry, .{ .name = "_start", .linkage = .Strong });
 }
 
-pub fn kmain(_: *zigvale.Struct.Parsed) noreturn {
+pub fn kmain(_: *const zigvale.Struct.Parsed) noreturn {
     while (true) {}
 }
 ```
