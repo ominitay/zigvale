@@ -429,6 +429,52 @@ pub const Struct = packed struct {
             context_control: u1,
             unused: u28,
         };
+
+        pub const Writer = struct {
+            context: TerminalTag,
+            pub const Error = error{}; // No errors can be returned, but this is necessary anyway to be a valid writer...
+
+            pub fn write(self: Writer, bytes: []const u8) !usize {
+                self.context.write(bytes);
+                return bytes.len;
+            }
+
+            pub fn writeAll(self: Writer, bytes: []const u8) !void {
+                _ = try self.write(bytes);
+            }
+
+            pub fn print(self: Writer, comptime format: []const u8, args: anytype) !void {
+                return std.fmt.format(self, format, args);
+            }
+
+            pub fn writeByte(self: Writer, byte: u8) !void {
+                _ = try self.write(&[_]u8{byte});
+            }
+
+            pub fn writeByteNTimes(self: Writer, byte: u8, n: usize) !void {
+                var bytes: [256]u8 = undefined;
+                std.mem.set(u8, bytes[0..], byte);
+
+                var remaining: usize = n;
+                while (remaining > 0) {
+                    const to_write = std.math.min(remaining, bytes.len);
+                    try self.writeAll(bytes[0..to_write]);
+                    remaining -= to_write;
+                }
+            }
+        };
+
+        pub fn writer(self: TerminalTag) Writer {
+            return Writer{ .context = self };
+        }
+
+        pub fn write(self: TerminalTag, bytes: []const u8) void {
+            self.term_write(bytes.ptr, bytes.len);
+        }
+
+        pub fn print(self: TerminalTag, comptime format: []const u8, args: anytype) void {
+            self.writer().print(format, args) catch unreachable;
+        }
     };
 
     /// This tag provides the kernel with a list of modules loaded alongside the kernel.
