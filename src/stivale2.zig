@@ -115,13 +115,25 @@ pub const Header = packed struct {
         tag: Tag = .{ .identifier = .terminal },
         flags: @This().Flags = .{},
         /// Address of the terminal callback function
-        callback: u64,
+        callback: ?fn (CallbackType, u64, u64, u64) callconv(.C) void = null,
 
         pub const Flags = packed struct {
             /// Set if a callback function is provided
             callback: u1 = 0,
             /// Undefined and must be set to 0.
             zeros: u63 = 0,
+        };
+
+        /// These are the possible types which the terminal callback function may have to deal with.
+        pub const CallbackType = enum(u64) {
+            dec = 10,
+            bell = 20,
+            private_id = 30,
+            status_report = 40,
+            pos_report = 50,
+            kbd_leds = 60,
+            mode = 70,
+            linux = 80,
         };
     };
 
@@ -401,7 +413,7 @@ pub const Struct = packed struct {
         cols: u16,
         rows: u16,
         /// Pointer to the entry point of the `stivale2_term_write()` function.
-        term_write: u64,
+        term_write: fn (ptr: [*]const u8, length: u64) callconv(.C) void,
         /// If `Flags.max_length` is set, this field specifies the maximum allowed string length to be passed
         /// to `term_write()`. If this is 0, then there is limit.
         max_length: u64,
@@ -492,7 +504,7 @@ pub const Struct = packed struct {
     pub const KernelFileTag = packed struct {
         tag: Tag = .{ .identifier = .kernel_file },
         /// Address of the kernel file
-        kernel_file: u64,
+        kernel_file: [*]const u8,
     };
 
     /// This tag provides the kernel with a pointer to a copy of the executable file of the kernel, along with
@@ -500,7 +512,7 @@ pub const Struct = packed struct {
     pub const KernelFileV2Tag = packed struct {
         tag: Tag = .{ .identifier = .kernel_file_v2 },
         /// Address of the kernel file
-        kernel_file: u64,
+        kernel_file: [*]const u8,
         /// Size of the kernel file
         kernel_size: u64,
     };
