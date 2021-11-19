@@ -97,9 +97,9 @@ pub const Header = packed struct {
     /// text mode, and the bootloader will refuse to boot the kernel if that cannot be fulfilled.
     pub const FramebufferTag = packed struct {
         tag: Tag = .{ .identifier = .framebuffer },
-        width: u16,
-        height: u16,
-        bpp: u16,
+        width: u16 = 0,
+        height: u16 = 0,
+        bpp: u16 = 0,
         unused: u16 = 0,
     };
 
@@ -113,7 +113,7 @@ pub const Header = packed struct {
     /// or text mode.
     pub const TerminalTag = packed struct {
         tag: Tag = .{ .identifier = .terminal },
-        flags: @This().Flags,
+        flags: @This().Flags = .{},
         /// Address of the terminal callback function
         callback: u64,
 
@@ -128,7 +128,7 @@ pub const Header = packed struct {
     /// This tag enables support for booting up application processors.
     pub const SmpTag = packed struct {
         tag: Tag = .{ .identifier = .smp },
-        flags: @This().Flags,
+        flags: @This().Flags = .{},
 
         pub const Flags = packed struct {
             /// Use xAPIC
