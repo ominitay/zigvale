@@ -515,6 +515,11 @@ pub const Struct = packed struct {
         kernel_file: [*]const u8,
         /// Size of the kernel file
         kernel_size: u64,
+
+        /// Returns a slice over the kernel file
+        pub fn asSlice(self: KernelFileV2Tag) []const u8 {
+            return self.kernel_file[0..self.kernel_size];
+        }
     };
 
     /// This tag provides the kernel with the slide that the bootloader has applied to the kernel's address
@@ -630,6 +635,16 @@ test "Struct Other Sizes" {
     try expect(@bitSizeOf(Struct.MemmapEntry) == 192);
     try expect(@bitSizeOf(Struct.Module) == 1152);
     try expect(@bitSizeOf(Struct.SmpInfo) == 256);
+}
+
+test "KernelFileV2Tag asSlice" {
+    const string: []const u8 = "Hello world!";
+    const kernel_file_v2_tag = Struct.KernelFileV2Tag{
+        .kernel_file = string.ptr,
+        .kernel_size = string.len,
+    };
+
+    try expect(std.mem.eql(u8, string, kernel_file_v2_tag.asSlice()));
 }
 
 // We use this only as a helper for our test
