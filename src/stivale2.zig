@@ -220,6 +220,7 @@ pub const Struct = packed struct {
     pub const Parsed = struct {
         bootloader_brand: []const u8,
         bootloader_version: []const u8,
+        first: ?*const Tag = null,
         pmrs: ?*const PmrsTag = null,
         cmdline: ?*const CmdlineTag = null,
         memmap: ?*const MemmapTag = null,
@@ -249,6 +250,7 @@ pub const Struct = packed struct {
         var parsed = Parsed{
             .bootloader_brand = std.mem.sliceTo(&self.bootloader_brand, 0),
             .bootloader_version = std.mem.sliceTo(&self.bootloader_version, 0),
+            .first = self.tags,
         };
 
         var tag_opt = self.tags;
