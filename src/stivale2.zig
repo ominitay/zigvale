@@ -97,9 +97,9 @@ pub const Header = packed struct {
     /// text mode, and the bootloader will refuse to boot the kernel if that cannot be fulfilled.
     pub const FramebufferTag = packed struct {
         tag: Tag = .{ .identifier = .framebuffer },
-        width: u16,
-        height: u16,
-        bpp: u16,
+        width: u16 = 0,
+        height: u16 = 0,
+        bpp: u16 = 0,
         unused: u16 = 0,
     };
 
@@ -113,9 +113,9 @@ pub const Header = packed struct {
     /// or text mode.
     pub const TerminalTag = packed struct {
         tag: Tag = .{ .identifier = .terminal },
-        flags: @This().Flags,
+        flags: @This().Flags = .{},
         /// Address of the terminal callback function
-        callback: u64,
+        callback: ?fn (CallbackType, u64, u64, u64) callconv(.C) void = null,
 
         pub const Flags = packed struct {
             /// Set if a callback function is provided
@@ -123,12 +123,24 @@ pub const Header = packed struct {
             /// Undefined and must be set to 0.
             zeros: u63 = 0,
         };
+
+        /// These are the possible types which the terminal callback function may have to deal with.
+        pub const CallbackType = enum(u64) {
+            dec = 10,
+            bell = 20,
+            private_id = 30,
+            status_report = 40,
+            pos_report = 50,
+            kbd_leds = 60,
+            mode = 70,
+            linux = 80,
+        };
     };
 
     /// This tag enables support for booting up application processors.
     pub const SmpTag = packed struct {
         tag: Tag = .{ .identifier = .smp },
-        flags: @This().Flags,
+        flags: @This().Flags = .{},
 
         pub const Flags = packed struct {
             /// Use xAPIC
@@ -208,6 +220,7 @@ pub const Struct = packed struct {
     pub const Parsed = struct {
         bootloader_brand: []const u8,
         bootloader_version: []const u8,
+        first: ?*const Tag = null,
         pmrs: ?*const PmrsTag = null,
         cmdline: ?*const CmdlineTag = null,
         memmap: ?*const MemmapTag = null,
@@ -237,6 +250,7 @@ pub const Struct = packed struct {
         var parsed = Parsed{
             .bootloader_brand = std.mem.sliceTo(&self.bootloader_brand, 0),
             .bootloader_version = std.mem.sliceTo(&self.bootloader_version, 0),
+            .first = self.tags,
         };
 
         var tag_opt = self.tags;
@@ -401,7 +415,7 @@ pub const Struct = packed struct {
         cols: u16,
         rows: u16,
         /// Pointer to the entry point of the `stivale2_term_write()` function.
-        term_write: u64,
+        term_write: fn (ptr: [*]const u8, length: u64) callconv(.C) void,
         /// If `Flags.max_length` is set, this field specifies the maximum allowed string length to be passed
         /// to `term_write()`. If this is 0, then there is limit.
         max_length: u64,
@@ -417,6 +431,52 @@ pub const Struct = packed struct {
             context_control: u1,
             unused: u28,
         };
+
+        pub const Writer = struct {
+            context: TerminalTag,
+            pub const Error = error{}; // No errors can be returned, but this is necessary anyway to be a valid writer...
+
+            pub fn write(self: Writer, bytes: []const u8) !usize {
+                self.context.write(bytes);
+                return bytes.len;
+            }
+
+            pub fn writeAll(self: Writer, bytes: []const u8) !void {
+                _ = try self.write(bytes);
+            }
+
+            pub fn print(self: Writer, comptime format: []const u8, args: anytype) !void {
+                return std.fmt.format(self, format, args);
+            }
+
+            pub fn writeByte(self: Writer, byte: u8) !void {
+                _ = try self.write(&[_]u8{byte});
+            }
+
+            pub fn writeByteNTimes(self: Writer, byte: u8, n: usize) !void {
+                var bytes: [256]u8 = undefined;
+                std.mem.set(u8, bytes[0..], byte);
+
+                var remaining: usize = n;
+                while (remaining > 0) {
+                    const to_write = std.math.min(remaining, bytes.len);
+                    try self.writeAll(bytes[0..to_write]);
+                    remaining -= to_write;
+                }
+            }
+        };
+
+        pub fn writer(self: TerminalTag) Writer {
+            return Writer{ .context = self };
+        }
+
+        pub fn write(self: TerminalTag, bytes: []const u8) void {
+            self.term_write(bytes.ptr, bytes.len);
+        }
+
+        pub fn print(self: TerminalTag, comptime format: []const u8, args: anytype) void {
+            self.writer().print(format, args) catch unreachable;
+        }
     };
 
     /// This tag provides the kernel with a list of modules loaded alongside the kernel.
@@ -492,7 +552,7 @@ pub const Struct = packed struct {
     pub const KernelFileTag = packed struct {
         tag: Tag = .{ .identifier = .kernel_file },
         /// Address of the kernel file
-        kernel_file: u64,
+        kernel_file: [*]const u8,
     };
 
     /// This tag provides the kernel with a pointer to a copy of the executable file of the kernel, along with
@@ -500,9 +560,14 @@ pub const Struct = packed struct {
     pub const KernelFileV2Tag = packed struct {
         tag: Tag = .{ .identifier = .kernel_file_v2 },
         /// Address of the kernel file
-        kernel_file: u64,
+        kernel_file: [*]const u8,
         /// Size of the kernel file
         kernel_size: u64,
+
+        /// Returns a slice over the kernel file
+        pub fn asSlice(self: KernelFileV2Tag) []const u8 {
+            return self.kernel_file[0..self.kernel_size];
+        }
     };
 
     /// This tag provides the kernel with the slide that the bootloader has applied to the kernel's address
@@ -535,7 +600,7 @@ pub const Struct = packed struct {
 
     pub const SmpInfo = packed struct {
         /// ACPI processor UID as specified by MADT
-        acpi_processor_uid: u32,
+        processor_id: u32,
         /// LAPIC ID as specified by MADT
         lapic_id: u32,
         /// The stack that will be loaded in ESP/RSP once the goto_address field is loaded. This **MUST** point
@@ -618,6 +683,16 @@ test "Struct Other Sizes" {
     try expect(@bitSizeOf(Struct.MemmapEntry) == 192);
     try expect(@bitSizeOf(Struct.Module) == 1152);
     try expect(@bitSizeOf(Struct.SmpInfo) == 256);
+}
+
+test "KernelFileV2Tag asSlice" {
+    const string: []const u8 = "Hello world!";
+    const kernel_file_v2_tag = Struct.KernelFileV2Tag{
+        .kernel_file = string.ptr,
+        .kernel_size = string.len,
+    };
+
+    try expect(std.mem.eql(u8, string, kernel_file_v2_tag.asSlice()));
 }
 
 // We use this only as a helper for our test
