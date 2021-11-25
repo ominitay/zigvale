@@ -75,6 +75,7 @@ pub const Header = packed struct {
         terminal = 0xa85d499b1823be72,
         smp = 0x1ab015085f3273df,
         five_level_paging = 0x932f477032007e8f,
+        slide_hddm = 0xdc29269c2af53d1d,
         unmap_null = 0x92919432b16fe7e7,
         _,
     };
@@ -157,6 +158,19 @@ pub const Header = packed struct {
         tag: Tag = .{ .identifier = .five_level_paging },
     };
 
+    /// This tag tells the bootloader to add a random slide to the base address of the higher half direct map (HHDM)
+    pub const SlideHhdmTag = packed struct {
+        tag: Tag = .{ .identifier = .slide_hhdm },
+        flags: @This().Flags = .{},
+        /// Desired alignment for base address of the HHDM. Must be non-0 and aligned to 2MiB.
+        alignment: u64,
+
+        pub const Flags = packed struct {
+            /// Undefined and must be set to 0.
+            zeros: u64 = 0,
+        };
+    };
+
     /// This tag tells the bootloader to unmap the first page of the virtual address space.
     pub const UnmapNullTag = packed struct {
         tag: Tag = .{ .identifier = .unmap_null },
@@ -174,6 +188,7 @@ test "Header Tag Sizes" {
     try expect(@bitSizeOf(Header.TerminalTag) == 256);
     try expect(@bitSizeOf(Header.SmpTag) == 192);
     try expect(@bitSizeOf(Header.FiveLevelPagingTag) == 128);
+    try expect(@bitSizeOf(Header.SlideHhdmTag) == 256);
     try expect(@bitSizeOf(Header.UnmapNullTag) == 128);
 }
 
@@ -213,7 +228,7 @@ pub const Struct = packed struct {
         pxe_server_info = 0x29d1e96239247032,
         mmio32_uart = 0xb813f9b8dbc78797,
         dtb = 0xabb29bd49a2833fa,
-        vmap = 0xb0ed257db18cb58f,
+        hhdm = 0xb0ed257db18cb58f,
         _,
     };
 
@@ -244,7 +259,7 @@ pub const Struct = packed struct {
         pxe_server_info: ?*const PxeServerInfoTag = null,
         mmio32_uart: ?*const Mmio32UartTag = null,
         dtb: ?*const DtbTag = null,
-        vmap: ?*const VmapTag = null,
+        hhdm: ?*const HhdmTag = null,
     };
 
     /// Returns `Struct.Parsed`, filled with all detected tags
@@ -280,7 +295,7 @@ pub const Struct = packed struct {
                 .pxe_server_info => parsed.pxe_server_info = @ptrCast(*const PxeServerInfoTag, tag),
                 .mmio32_uart => parsed.mmio32_uart = @ptrCast(*const Mmio32UartTag, tag),
                 .dtb => parsed.dtb = @ptrCast(*const DtbTag, tag),
-                .vmap => parsed.vmap = @ptrCast(*const VmapTag, tag),
+                .hhdm => parsed.hhdm = @ptrCast(*const HhdmTag, tag),
                 _ => {}, // Ignore unknown tags
             }
         }
@@ -669,10 +684,10 @@ pub const Struct = packed struct {
         size: u64,
     };
 
-    /// This tag describes the high physical memory location (`VMAP_HIGH`)
-    pub const VmapTag = packed struct {
-        tag: Tag = .{ .identifier = .vmap },
-        /// `VMAP_HIGH`, where the physical memory is mapped in the higher half
+    /// This tag reports the start address of the higher half direct map (HHDM)
+    pub const HhdmTag = packed struct {
+        tag: Tag = .{ .identifier = .hhdm },
+        /// Beginning of the HHDM (virtual address)
         addr: u64,
     };
 };
@@ -704,7 +719,7 @@ test "Struct Tag Sizes" {
     try expect(@bitSizeOf(Struct.PxeServerInfoTag) == 160);
     try expect(@bitSizeOf(Struct.Mmio32UartTag) == 192);
     try expect(@bitSizeOf(Struct.DtbTag) == 256);
-    try expect(@bitSizeOf(Struct.VmapTag) == 192);
+    try expect(@bitSizeOf(Struct.HhdmTag) == 192);
 }
 
 test "Struct Other Sizes" {
