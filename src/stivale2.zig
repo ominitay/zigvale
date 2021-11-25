@@ -207,6 +207,7 @@ pub const Struct = packed struct {
         efi_system_table = 0x4bc5ec15845b558e,
         kernel_file = 0xe599d90c2975584a,
         kernel_file_v2 = 0x37c13018a02c6ea2,
+        boot_volume = 0x9b4358364c19ee62,
         kernel_slide = 0xee80847d01506c57,
         smp = 0x34d1d96339647025,
         pxe_server_info = 0x29d1e96239247032,
@@ -237,6 +238,7 @@ pub const Struct = packed struct {
         efi_system_table: ?*const EfiSystemTableTag = null,
         kernel_file: ?*const KernelFileTag = null,
         kernel_file_v2: ?*const KernelFileV2Tag = null,
+        boot_volume: ?*const BootVolumeTag = null,
         kernel_slide: ?*const KernelSlideTag = null,
         smp: ?*const SmpTag = null,
         pxe_server_info: ?*const PxeServerInfoTag = null,
@@ -272,6 +274,7 @@ pub const Struct = packed struct {
                 .efi_system_table => parsed.efi_system_table = @ptrCast(*const EfiSystemTableTag, tag),
                 .kernel_file => parsed.kernel_file = @ptrCast(*const KernelFileTag, tag),
                 .kernel_file_v2 => parsed.kernel_file_v2 = @ptrCast(*const KernelFileV2Tag, tag),
+                .boot_volume => parsed.boot_volume = @ptrCast(*const BootVolumeTag, tag),
                 .kernel_slide => parsed.kernel_slide = @ptrCast(*const KernelSlideTag, tag),
                 .smp => parsed.smp = @ptrCast(*const SmpTag, tag),
                 .pxe_server_info => parsed.pxe_server_info = @ptrCast(*const PxeServerInfoTag, tag),
@@ -570,6 +573,31 @@ pub const Struct = packed struct {
         }
     };
 
+    /// This tag provides the GUID and partition GUID of the volume from which the kernel was loaded, if available
+    pub const BootVolumeTag = packed struct {
+        tag: Tag = .{ .identifier = .boot_volume },
+        flags: Flags,
+        /// GUID -- valid when flags.guid_valid is set
+        guid: Guid,
+        /// Partition GUID -- valid when flags.part_guid_valid is set
+        part_guid: Guid,
+
+        pub const Flags = packed struct {
+            /// Set if GUID is valid
+            guid_valid: u1,
+            /// Set if partition GUID is valid
+            part_guid_valid: u1,
+            unused: u62,
+        };
+
+        pub const Guid = packed struct {
+            a: u32,
+            b: u16,
+            c: u16,
+            d: [8]u8,
+        };
+    };
+
     /// This tag provides the kernel with the slide that the bootloader has applied to the kernel's address
     pub const KernelSlideTag = packed struct {
         tag: Tag = .{ .identifier = .kernel_slide },
@@ -670,6 +698,7 @@ test "Struct Tag Sizes" {
     try expect(@bitSizeOf(Struct.EfiSystemTableTag) == 192);
     try expect(@bitSizeOf(Struct.KernelFileTag) == 192);
     try expect(@bitSizeOf(Struct.KernelFileV2Tag) == 256);
+    try expect(@bitSizeOf(Struct.BootVolumeTag) == 448);
     try expect(@bitSizeOf(Struct.KernelSlideTag) == 192);
     try expect(@bitSizeOf(Struct.SmpTag) == 320);
     try expect(@bitSizeOf(Struct.PxeServerInfoTag) == 160);
