@@ -208,6 +208,7 @@ pub const Struct = packed struct {
         kernel_file = 0xe599d90c2975584a,
         kernel_file_v2 = 0x37c13018a02c6ea2,
         kernel_slide = 0xee80847d01506c57,
+        boot_volume = 0x9b4358364c19ee62,
         smp = 0x34d1d96339647025,
         pxe_server_info = 0x29d1e96239247032,
         mmio32_uart = 0xb813f9b8dbc78797,
@@ -238,6 +239,7 @@ pub const Struct = packed struct {
         kernel_file: ?*const KernelFileTag = null,
         kernel_file_v2: ?*const KernelFileV2Tag = null,
         kernel_slide: ?*const KernelSlideTag = null,
+        boot_volume: ?*const BootVolumeTag = null,
         smp: ?*const SmpTag = null,
         pxe_server_info: ?*const PxeServerInfoTag = null,
         mmio32_uart: ?*const Mmio32UartTag = null,
@@ -273,6 +275,7 @@ pub const Struct = packed struct {
                 .kernel_file => parsed.kernel_file = @ptrCast(*const KernelFileTag, tag),
                 .kernel_file_v2 => parsed.kernel_file_v2 = @ptrCast(*const KernelFileV2Tag, tag),
                 .kernel_slide => parsed.kernel_slide = @ptrCast(*const KernelSlideTag, tag),
+                .boot_volume => parsed.boot_volume = @ptrCast(*const BootVolumeTag, tag),
                 .smp => parsed.smp = @ptrCast(*const SmpTag, tag),
                 .pxe_server_info => parsed.pxe_server_info = @ptrCast(*const PxeServerInfoTag, tag),
                 .mmio32_uart => parsed.mmio32_uart = @ptrCast(*const Mmio32UartTag, tag),
@@ -576,6 +579,31 @@ pub const Struct = packed struct {
         kernel_slide: u64,
     };
 
+    /// This tag provides the GUID and partition GUID of the volume from which the kernel was loaded, if available.
+    /// The GUID is the GUID provided by the filesystem on the volume from which the kernel is loaded.
+    /// The partition GUID is the GUID associated to this volume, provided by the partition table, such as GPT.
+    pub const BootVolumeTag = packed struct {
+        tag: Tag = .{ .identifier = .boot_volume },
+        flags: Flags,
+        /// valid if `guid_is_valid` of flags is set
+        guid: Guid,
+        /// valid if `part_guid_is_valid` of flags is set
+        part_guid: Guid,
+
+        pub const Guid = extern struct {
+            a: u32,
+            b: u16,
+            c: u16,
+            d: [8]u8,
+        };
+
+        pub const Flags = packed struct {
+            guid_is_valid: u1,
+            part_guid_is_valid: u1,
+            unused: u62,
+        };
+    };
+
     /// This tag provides the kernel with info about a multiprocessor environment
     pub const SmpTag = packed struct {
         tag: Tag = .{ .identifier = .smp },
@@ -671,6 +699,7 @@ test "Struct Tag Sizes" {
     try expect(@bitSizeOf(Struct.KernelFileTag) == 192);
     try expect(@bitSizeOf(Struct.KernelFileV2Tag) == 256);
     try expect(@bitSizeOf(Struct.KernelSlideTag) == 192);
+    try expect(@bitSizeOf(Struct.BootVolumeTag) == 448);
     try expect(@bitSizeOf(Struct.SmpTag) == 320);
     try expect(@bitSizeOf(Struct.PxeServerInfoTag) == 160);
     try expect(@bitSizeOf(Struct.Mmio32UartTag) == 192);
