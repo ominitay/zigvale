@@ -212,7 +212,7 @@ pub const Struct = packed struct {
         pxe_server_info = 0x29d1e96239247032,
         mmio32_uart = 0xb813f9b8dbc78797,
         dtb = 0xabb29bd49a2833fa,
-        vmap = 0xb0ed257db18cb58f,
+        hhdm = 0xb0ed257db18cb58f,
         _,
     };
 
@@ -242,7 +242,7 @@ pub const Struct = packed struct {
         pxe_server_info: ?*const PxeServerInfoTag = null,
         mmio32_uart: ?*const Mmio32UartTag = null,
         dtb: ?*const DtbTag = null,
-        vmap: ?*const VmapTag = null,
+        hhdm: ?*const HhdmTag = null,
     };
 
     /// Returns `Struct.Parsed`, filled with all detected tags
@@ -277,7 +277,7 @@ pub const Struct = packed struct {
                 .pxe_server_info => parsed.pxe_server_info = @ptrCast(*const PxeServerInfoTag, tag),
                 .mmio32_uart => parsed.mmio32_uart = @ptrCast(*const Mmio32UartTag, tag),
                 .dtb => parsed.dtb = @ptrCast(*const DtbTag, tag),
-                .vmap => parsed.vmap = @ptrCast(*const VmapTag, tag),
+                .hhdm => parsed.hhdm = @ptrCast(*const HhdmTag, tag),
                 _ => {}, // Ignore unknown tags
             }
         }
@@ -641,10 +641,10 @@ pub const Struct = packed struct {
         size: u64,
     };
 
-    /// This tag describes the high physical memory location (`VMAP_HIGH`)
-    pub const VmapTag = packed struct {
+    /// This tag reports the start address of the higher half direct map (HHDM).
+    pub const HhdmTag = packed struct {
         tag: Tag = .{ .identifier = .vmap },
-        /// `VMAP_HIGH`, where the physical memory is mapped in the higher half
+        /// Beginning of the HHDM (virtual address)
         addr: u64,
     };
 };
@@ -675,7 +675,7 @@ test "Struct Tag Sizes" {
     try expect(@bitSizeOf(Struct.PxeServerInfoTag) == 160);
     try expect(@bitSizeOf(Struct.Mmio32UartTag) == 192);
     try expect(@bitSizeOf(Struct.DtbTag) == 256);
-    try expect(@bitSizeOf(Struct.VmapTag) == 192);
+    try expect(@bitSizeOf(Struct.HhdmTag) == 192);
 }
 
 test "Struct Other Sizes" {
