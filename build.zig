@@ -9,7 +9,7 @@ pub fn build(b: *std.build.Builder) void {
     lib_tests.setBuildMode(mode);
 
     const lib_test_doc = lib_tests;
-    lib_test_doc.emit_docs = true;
+    lib_test_doc.emit_docs = .emit;
 
     const tests = b.step("test", "Run tests");
     tests.dependOn(&lib_tests.step);
