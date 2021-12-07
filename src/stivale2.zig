@@ -335,6 +335,10 @@ pub const Struct = packed struct {
         tag: Tag = .{ .identifier = .cmdline },
         /// Null-terminated array
         cmdline: [*:0]const u8,
+
+        pub fn asSlice(self: *const CmdlineTag) []const u8 {
+            return std.mem.sliceTo(self.cmdline, 0);
+        }
     };
 
     /// This tag provides the kernel with the memory map.
@@ -516,6 +520,10 @@ pub const Struct = packed struct {
         end: u64,
         /// ASCII null-terminated string passed to the module
         string: [128]u8,
+
+        pub fn getString(self: *const Module) []const u8 {
+            return std.mem.sliceTo(&self.string, 0);
+        }
     };
 
     /// This tag provides the kernel with the location of the ACPI RSDP structure
