@@ -312,8 +312,8 @@ pub const Struct = packed struct {
         entries: u64,
 
         /// Returns array of Pmr structs
-        pub fn getPmrs(self: *const PmrsTag) []Pmr {
-            return @intToPtr([*]Pmr, @ptrToInt(&self.entries) + 8)[0..self.entries];
+        pub fn getPmrs(self: *const PmrsTag) []const Pmr {
+            return @intToPtr([*]const Pmr, @ptrToInt(&self.entries) + 8)[0..self.entries];
         }
     };
 
@@ -344,8 +344,8 @@ pub const Struct = packed struct {
         entries: u64,
 
         /// Returns array of `MemmapEntry` structs
-        pub fn getMemmap(self: *const MemmapTag) []MemmapEntry {
-            return @intToPtr([*]MemmapEntry, @ptrToInt(&self.entries) + 8)[0..self.entries];
+        pub fn getMemmap(self: *const MemmapTag) []const MemmapEntry {
+            return @intToPtr([*]const MemmapEntry, @ptrToInt(&self.entries) + 8)[0..self.entries];
         }
     };
 
@@ -504,8 +504,8 @@ pub const Struct = packed struct {
         module_count: u64,
 
         /// Returns array of `Module` structs
-        pub fn getModules(self: *const ModulesTag) []Module {
-            return @intToPtr([*]Module, @ptrToInt(&self.module_count) + 8)[0..self.module_count];
+        pub fn getModules(self: *const ModulesTag) []const Module {
+            return @intToPtr([*]const Module, @ptrToInt(&self.module_count) + 8)[0..self.module_count];
         }
     };
 
@@ -630,8 +630,8 @@ pub const Struct = packed struct {
         cpu_count: u64,
 
         /// Returns array of `SmpInfo` structs
-        pub fn getSmpInfo(self: *const SmpTag) []SmpInfo {
-            return @intToPtr([*]SmpInfo, @ptrToInt(&self.cpu_count) + 8)[0..self.cpu_count];
+        pub fn getSmpInfo(self: *const SmpTag) []const SmpInfo {
+            return @intToPtr([*]const SmpInfo, @ptrToInt(&self.cpu_count) + 8)[0..self.cpu_count];
         }
 
         pub const Flags = packed struct {
