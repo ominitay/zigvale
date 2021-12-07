@@ -303,7 +303,7 @@ pub const Struct = packed struct {
         return parsed;
     }
 
-    /// This tag tells the kernel that th4e PMR flag in the header was recognised and that the kernel has been
+    /// This tag tells the kernel that the PMR flag in the header was recognised and that the kernel has been
     /// successfully mapped by its ELF segments. It also provides the array of ranges and their corresponding
     /// permissions.
     pub const PmrsTag = packed struct {
