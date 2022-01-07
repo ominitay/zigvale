@@ -303,7 +303,7 @@ pub const Struct = packed struct {
         return parsed;
     }
 
-    /// This tag tells the kernel that th4e PMR flag in the header was recognised and that the kernel has been
+    /// This tag tells the kernel that the PMR flag in the header was recognised and that the kernel has been
     /// successfully mapped by its ELF segments. It also provides the array of ranges and their corresponding
     /// permissions.
     pub const PmrsTag = packed struct {
@@ -312,8 +312,8 @@ pub const Struct = packed struct {
         entries: u64,
 
         /// Returns array of Pmr structs
-        pub fn getPmrs(self: *const PmrsTag) []Pmr {
-            return @intToPtr([*]Pmr, @ptrToInt(&self.entries) + 8)[0..self.entries];
+        pub fn getPmrs(self: *const PmrsTag) []const Pmr {
+            return @intToPtr([*]const Pmr, @ptrToInt(&self.entries) + 8)[0..self.entries];
         }
     };
 
@@ -335,6 +335,10 @@ pub const Struct = packed struct {
         tag: Tag = .{ .identifier = .cmdline },
         /// Null-terminated array
         cmdline: [*:0]const u8,
+
+        pub fn asSlice(self: *const CmdlineTag) []const u8 {
+            return std.mem.sliceTo(self.cmdline, 0);
+        }
     };
 
     /// This tag provides the kernel with the memory map.
@@ -344,8 +348,8 @@ pub const Struct = packed struct {
         entries: u64,
 
         /// Returns array of `MemmapEntry` structs
-        pub fn getMemmap(self: *const MemmapTag) []MemmapEntry {
-            return @intToPtr([*]MemmapEntry, @ptrToInt(&self.entries) + 8)[0..self.entries];
+        pub fn getMemmap(self: *const MemmapTag) []const MemmapEntry {
+            return @intToPtr([*]const MemmapEntry, @ptrToInt(&self.entries) + 8)[0..self.entries];
         }
     };
 
@@ -504,8 +508,8 @@ pub const Struct = packed struct {
         module_count: u64,
 
         /// Returns array of `Module` structs
-        pub fn getModules(self: *const ModulesTag) []Module {
-            return @intToPtr([*]Module, @ptrToInt(&self.module_count) + 8)[0..self.module_count];
+        pub fn getModules(self: *const ModulesTag) []const Module {
+            return @intToPtr([*]const Module, @ptrToInt(&self.module_count) + 8)[0..self.module_count];
         }
     };
 
@@ -516,6 +520,10 @@ pub const Struct = packed struct {
         end: u64,
         /// ASCII null-terminated string passed to the module
         string: [128]u8,
+
+        pub fn getString(self: *const Module) []const u8 {
+            return std.mem.sliceTo(&self.string, 0);
+        }
     };
 
     /// This tag provides the kernel with the location of the ACPI RSDP structure
@@ -630,8 +638,8 @@ pub const Struct = packed struct {
         cpu_count: u64,
 
         /// Returns array of `SmpInfo` structs
-        pub fn getSmpInfo(self: *const SmpTag) []SmpInfo {
-            return @intToPtr([*]SmpInfo, @ptrToInt(&self.cpu_count) + 8)[0..self.cpu_count];
+        pub fn getSmpInfo(self: *const SmpTag) []const SmpInfo {
+            return @intToPtr([*]const SmpInfo, @ptrToInt(&self.cpu_count) + 8)[0..self.cpu_count];
         }
 
         pub const Flags = packed struct {
