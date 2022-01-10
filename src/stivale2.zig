@@ -41,7 +41,7 @@ test "TagGeneric" {
 /// The kernel must have a section `.stivale2hdr` either containing a header, or an anchor pointing to one.
 pub const Header = packed struct {
     /// The address to be jumped to as the entry point of the kernel. If 0, the ELF entry point will be used.
-    entry_point: u64 = 0,
+    entry_point: ?fn (*const Struct) callconv(.C) noreturn = 0,
     /// The stack address which will be in ESP/RSP when the kernel is loaded.
     /// The stack must be at least 256 bytes, and must have a 16 byte aligned address.
     stack: ?*u8,
@@ -774,18 +774,18 @@ test "Parse Struct" {
 
 /// This function takes your kernel entry point as an argument. It parses the `Struct` for you, and provides `Struct.Parsed` as an argument to the
 /// entry point. You may export it as `_start` using `@export`.
-pub fn entryPoint(comptime entrypoint: fn (*const Struct.Parsed) noreturn) fn (*const Struct) callconv(.C) noreturn {
+pub fn entryPoint(comptime entrypoint: fn (Struct.Parsed) noreturn) fn (*const Struct) callconv(.C) noreturn {
     return struct {
         pub fn entryPoint(info: *const Struct) callconv(.C) noreturn {
             const parsed = info.parse();
-            entrypoint(&parsed);
+            entrypoint(parsed);
         }
     }.entryPoint;
 }
 
 test "entryPoint" {
     const kmain = struct {
-        pub fn kmain(_: *const Struct.Parsed) noreturn {
+        pub fn kmain(_: Struct.Parsed) noreturn {
             while (true) {}
         }
     }.kmain;
