@@ -41,7 +41,7 @@ test "TagGeneric" {
 /// The kernel must have a section `.stivale2hdr` either containing a header, or an anchor pointing to one.
 pub const Header = packed struct {
     /// The address to be jumped to as the entry point of the kernel. If 0, the ELF entry point will be used.
-    entry_point: ?fn (*const Struct) callconv(.C) noreturn = 0,
+    entry_point: ?fn (*const Struct) callconv(.C) noreturn = null,
     /// The stack address which will be in ESP/RSP when the kernel is loaded.
     /// The stack must be at least 256 bytes, and must have a 16 byte aligned address.
     stack: ?*u8,
@@ -175,6 +175,10 @@ pub const Header = packed struct {
     pub const UnmapNullTag = packed struct {
         tag: Tag = .{ .identifier = .unmap_null },
     };
+
+    comptime {
+        std.testing.refAllDecls(@This());
+    }
 };
 
 test "Header Size" {
@@ -698,6 +702,10 @@ pub const Struct = packed struct {
         /// Beginning of the HHDM (virtual address)
         addr: u64,
     };
+
+    comptime {
+        std.testing.refAllDecls(@This());
+    }
 };
 
 test "Struct Size" {
@@ -791,4 +799,8 @@ test "entryPoint" {
     }.kmain;
 
     _ = entryPoint(kmain);
+}
+
+comptime {
+    std.testing.refAllDecls(@This());
 }
