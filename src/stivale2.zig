@@ -175,6 +175,10 @@ pub const Header = packed struct {
     pub const UnmapNullTag = packed struct {
         tag: Tag = .{ .identifier = .unmap_null },
     };
+
+    comptime {
+        std.testing.refAllDecls(@This());
+    }
 };
 
 test "Header Size" {
@@ -698,6 +702,10 @@ pub const Struct = packed struct {
         /// Beginning of the HHDM (virtual address)
         addr: u64,
     };
+
+    comptime {
+        std.testing.refAllDecls(@This());
+    }
 };
 
 test "Struct Size" {
@@ -791,4 +799,8 @@ test "entryPoint" {
     }.kmain;
 
     _ = entryPoint(kmain);
+}
+
+comptime {
+    std.testing.refAllDecls(@This());
 }
