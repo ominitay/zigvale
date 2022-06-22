@@ -211,6 +211,7 @@ pub const Struct = packed struct {
     /// Unique identifiers for each struct tag
     pub const Identifier = enum(u64) {
         pmrs = 0x5df266a64047b6bd,
+        kernel_base_address = 0x060d78874a2a8af0,
         cmdline = 0xe5e76a1b4597a781,
         memmap = 0x2187f79e8612de07,
         framebuffer = 0x506461d2950408fa,
@@ -242,6 +243,7 @@ pub const Struct = packed struct {
         bootloader_version: []const u8,
         first: ?*const Tag = null,
         pmrs: ?*const PmrsTag = null,
+        kernel_base_address: ?*const KernelBaseAddressTag = null,
         cmdline: ?*const CmdlineTag = null,
         memmap: ?*const MemmapTag = null,
         framebuffer: ?*const FramebufferTag = null,
@@ -278,6 +280,7 @@ pub const Struct = packed struct {
         while (tag_opt) |tag| : (tag_opt = tag.next) {
             switch (tag.identifier) {
                 .pmrs => parsed.pmrs = @ptrCast(*const PmrsTag, tag),
+                .kernel_base_address => parsed.kernel_base_address = @ptrCast(*const KernelBaseAddressTag, tag),
                 .cmdline => parsed.cmdline = @ptrCast(*const CmdlineTag, tag),
                 .memmap => parsed.memmap = @ptrCast(*const MemmapTag, tag),
                 .framebuffer => parsed.framebuffer = @ptrCast(*const FramebufferTag, tag),
@@ -332,6 +335,13 @@ pub const Struct = packed struct {
             readable: u1,
             unused: u61,
         };
+    };
+
+    /// This tag provides the kernel with both its physical and virtual base addresses when fully virtual mappings are enabled.
+    pub const KernelBaseAddressTag = packed struct {
+        tag: Tag = .{ .identifier = .kernel_base_address },
+        physical: u64,
+        virtual: u64,
     };
 
     /// This tag provides the kernel with the command line string.
@@ -714,6 +724,7 @@ test "Struct Size" {
 
 test "Struct Tag Sizes" {
     try expect(@bitSizeOf(Struct.PmrsTag) == 192);
+    try expect(@bitSizeOf(Struct.KernelBaseAddressTag) == 256);
     try expect(@bitSizeOf(Struct.CmdlineTag) == 192);
     try expect(@bitSizeOf(Struct.MemmapTag) == 192);
     try expect(@bitSizeOf(Struct.FramebufferTag) == 320);
