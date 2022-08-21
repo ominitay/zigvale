@@ -16,6 +16,7 @@ jobs:
         with:
           version: master
       - run: zig build test
+      - run: zig build test -Dstage1
   lint:
     runs-on: ubuntu-latest
     steps:

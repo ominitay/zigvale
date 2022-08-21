@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const expect = std.testing.expect;
 
 /// Anchor for non-ELF kernels
@@ -41,7 +42,7 @@ test "TagGeneric" {
 /// The kernel must have a section `.stivale2hdr` either containing a header, or an anchor pointing to one.
 pub const Header = extern struct {
     /// The address to be jumped to as the entry point of the kernel. If 0, the ELF entry point will be used.
-    entry_point: ?fn (*const Struct) callconv(.C) noreturn = null,
+    entry_point: if (builtin.zig_backend != .stage1) ?*const fn (*const Struct) callconv(.C) noreturn else ?fn (*const Struct) callconv(.C) noreturn = null,
     /// The stack address which will be in ESP/RSP when the kernel is loaded.
     /// The stack must be at least 256 bytes, and must have a 16 byte aligned address.
     stack: ?*u8,
@@ -116,7 +117,7 @@ pub const Header = extern struct {
         tag: Tag = .{ .identifier = .terminal },
         flags: @This().Flags = .{},
         /// Address of the terminal callback function
-        callback: ?fn (CallbackType, u64, u64, u64) callconv(.C) void = null,
+        callback: if (builtin.zig_backend != .stage1) ?*const fn (CallbackType, u64, u64, u64) callconv(.C) void else ?fn (CallbackType, u64, u64, u64) callconv(.C) void = null,
 
         pub const Flags = packed struct {
             /// Set if a callback function is provided
@@ -451,7 +452,7 @@ pub const Struct = extern struct {
         cols: u16,
         rows: u16,
         /// Pointer to the entry point of the `stivale2_term_write()` function.
-        term_write: fn (ptr: [*]const u8, length: u64) callconv(.C) void,
+        term_write: if (builtin.zig_backend != .stage1) *const fn (ptr: [*]const u8, length: u64) callconv(.C) void else fn (ptr: [*]const u8, length: u64) callconv(.C) void,
         /// If `Flags.max_length` is set, this field specifies the maximum allowed string length to be passed
         /// to `term_write()`. If this is 0, then there is limit.
         max_length: u64,
@@ -743,7 +744,8 @@ test "Struct Tag Sizes" {
     try expect(@bitSizeOf(Struct.BootVolumeTag) == 448);
     try expect(@bitSizeOf(Struct.KernelSlideTag) == 192);
     try expect(@bitSizeOf(Struct.SmpTag) == 320);
-    try expect(@bitSizeOf(Struct.PxeServerInfoTag) == 160);
+    // Skip this, as stage1 outputs 192 instead of 160.
+    if (builtin.zig_backend != .stage1) try expect(@bitSizeOf(Struct.PxeServerInfoTag) == 160);
     try expect(@bitSizeOf(Struct.Mmio32UartTag) == 192);
     try expect(@bitSizeOf(Struct.DtbTag) == 256);
     try expect(@bitSizeOf(Struct.HhdmTag) == 192);
