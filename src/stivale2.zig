@@ -75,7 +75,7 @@ pub const Header = extern struct {
         terminal = 0xa85d499b1823be72,
         smp = 0x1ab015085f3273df,
         five_level_paging = 0x932f477032007e8f,
-        slide_hddm = 0xdc29269c2af53d1d,
+        slide_hhdm = 0xdc29269c2af53d1d,
         unmap_null = 0x92919432b16fe7e7,
         _,
     };
