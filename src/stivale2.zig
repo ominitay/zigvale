@@ -2,7 +2,7 @@ const std = @import("std");
 const expect = std.testing.expect;
 
 /// Anchor for non-ELF kernels
-pub const Anchor = packed struct {
+pub const Anchor = extern struct {
     anchor: [15]u8 = "STIVALE2 ANCHOR",
     bits: u8,
     phys_load_addr: u64,
@@ -17,7 +17,7 @@ pub fn TagGeneric(comptime Id: type) type {
     if (@typeInfo(Id).Enum.tag_type != u64) @compileError("Tag identifier enum tag type isn't u64");
     if (@typeInfo(Id).Enum.is_exhaustive) @compileError("Tag identifier must be a non-exhaustive enum");
 
-    return packed struct {
+    return extern struct {
         const Self = @This();
 
         /// The unique identifier of the tag
@@ -39,7 +39,7 @@ test "TagGeneric" {
 
 /// The Header contains information passed from the kernel to the bootloader.
 /// The kernel must have a section `.stivale2hdr` either containing a header, or an anchor pointing to one.
-pub const Header = packed struct {
+pub const Header = extern struct {
     /// The address to be jumped to as the entry point of the kernel. If 0, the ELF entry point will be used.
     entry_point: ?fn (*const Struct) callconv(.C) noreturn = null,
     /// The stack address which will be in ESP/RSP when the kernel is loaded.
@@ -83,7 +83,7 @@ pub const Header = packed struct {
     /// This tag tells the bootloader that the kernel has no requirement for a framebuffer to be initialised.
     /// Using neither this tag nor `FramebufferTag` means "force CGA text mode", and the bootloader will
     /// refuse to boot the kernel if that cannot be fulfilled.
-    pub const AnyVideoTag = packed struct {
+    pub const AnyVideoTag = extern struct {
         tag: Tag = .{ .identifier = .any_video },
         preference: Preference,
 
@@ -96,7 +96,7 @@ pub const Header = packed struct {
     /// This tag tells the bootloader framebuffer preferences. If used without `AnyVideo`, the bootloader
     /// will refuse to boot the kernel if a framebuffer cannot be initialised. Using neither means force CGA
     /// text mode, and the bootloader will refuse to boot the kernel if that cannot be fulfilled.
-    pub const FramebufferTag = packed struct {
+    pub const FramebufferTag = extern struct {
         tag: Tag = .{ .identifier = .framebuffer },
         width: u16 = 0,
         height: u16 = 0,
@@ -106,13 +106,13 @@ pub const Header = packed struct {
 
     /// **WARNING:** This tag is deprecated. Use is discouraged and may not be supported on newer bootloaders!
     /// This tag tells the bootloader to set up MTRR write-combining for the framebuffer.
-    pub const FramebufferMtrrTag = packed struct {
+    pub const FramebufferMtrrTag = extern struct {
         tag: Tag = .{ .identifier = .framebuffer_mtrr },
     };
 
     /// This tag tells the bootloader to set up a terminal for the kernel. The terminal may run in framebuffer
     /// or text mode.
-    pub const TerminalTag = packed struct {
+    pub const TerminalTag = extern struct {
         tag: Tag = .{ .identifier = .terminal },
         flags: @This().Flags = .{},
         /// Address of the terminal callback function
@@ -139,7 +139,7 @@ pub const Header = packed struct {
     };
 
     /// This tag enables support for booting up application processors.
-    pub const SmpTag = packed struct {
+    pub const SmpTag = extern struct {
         tag: Tag = .{ .identifier = .smp },
         flags: @This().Flags = .{},
 
@@ -154,12 +154,12 @@ pub const Header = packed struct {
     };
 
     /// This tag enables support for 5-level paging, if available.
-    pub const FiveLevelPagingTag = packed struct {
+    pub const FiveLevelPagingTag = extern struct {
         tag: Tag = .{ .identifier = .five_level_paging },
     };
 
     /// This tag tells the bootloader to add a random slide to the base address of the higher half direct map (HHDM)
-    pub const SlideHhdmTag = packed struct {
+    pub const SlideHhdmTag = extern struct {
         tag: Tag = .{ .identifier = .slide_hhdm },
         flags: @This().Flags = .{},
         /// Desired alignment for base address of the HHDM. Must be non-0 and aligned to 2MiB.
@@ -172,7 +172,7 @@ pub const Header = packed struct {
     };
 
     /// This tag tells the bootloader to unmap the first page of the virtual address space.
-    pub const UnmapNullTag = packed struct {
+    pub const UnmapNullTag = extern struct {
         tag: Tag = .{ .identifier = .unmap_null },
     };
 
@@ -198,7 +198,7 @@ test "Header Tag Sizes" {
 
 /// The Struct contains information passed from the bootloader to the kernel.
 /// A pointer to this is passed to the kernel as an argument to the entry point.
-pub const Struct = packed struct {
+pub const Struct = extern struct {
     /// Null terminated ASCII string
     bootloader_brand: [64]u8,
     /// Null terminated ASCII string
@@ -313,7 +313,7 @@ pub const Struct = packed struct {
     /// This tag tells the kernel that the PMR flag in the header was recognised and that the kernel has been
     /// successfully mapped by its ELF segments. It also provides the array of ranges and their corresponding
     /// permissions.
-    pub const PmrsTag = packed struct {
+    pub const PmrsTag = extern struct {
         tag: Tag = .{ .identifier = .pmrs },
         /// Number of entries in array
         entries: u64,
@@ -324,7 +324,7 @@ pub const Struct = packed struct {
         }
     };
 
-    pub const Pmr = packed struct {
+    pub const Pmr = extern struct {
         base: u64,
         length: u64,
         permissions: Permissions,
@@ -338,14 +338,14 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the kernel with both its physical and virtual base addresses when fully virtual mappings are enabled.
-    pub const KernelBaseAddressTag = packed struct {
+    pub const KernelBaseAddressTag = extern struct {
         tag: Tag = .{ .identifier = .kernel_base_address },
         physical: u64,
         virtual: u64,
     };
 
     /// This tag provides the kernel with the command line string.
-    pub const CmdlineTag = packed struct {
+    pub const CmdlineTag = extern struct {
         tag: Tag = .{ .identifier = .cmdline },
         /// Null-terminated array
         cmdline: [*:0]const u8,
@@ -356,7 +356,7 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the kernel with the memory map.
-    pub const MemmapTag = packed struct {
+    pub const MemmapTag = extern struct {
         tag: Tag = .{ .identifier = .memmap },
         /// Number of entries in array
         entries: u64,
@@ -367,7 +367,7 @@ pub const Struct = packed struct {
         }
     };
 
-    pub const MemmapEntry = packed struct {
+    pub const MemmapEntry = extern struct {
         /// Physical address of the base of the memory section
         base: u64,
         /// Length of the memory section
@@ -388,7 +388,7 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the kernel with details of the currently set-up framebuffer, if any
-    pub const FramebufferTag = packed struct {
+    pub const FramebufferTag = extern struct {
         tag: Tag = .{ .identifier = .framebuffer },
         /// The address of the framebuffer
         address: u64,
@@ -416,12 +416,12 @@ pub const Struct = packed struct {
 
     /// **WARNING:** This tag is deprecated. Use is discouraged and may not be supported on newer bootloaders!
     /// This tag signals to the kernel that MTRR write-combining for the framebuffer was enabled.
-    pub const FramebufferMtrrTag = packed struct {
+    pub const FramebufferMtrrTag = extern struct {
         tag: Tag = .{ .identifier = .framebuffer_mtrr },
     };
 
     /// This tag provides the kernel with details of the currently set up CGA text mode, if any.
-    pub const TextModeTag = packed struct {
+    pub const TextModeTag = extern struct {
         tag: Tag = .{ .identifier = .textmode },
         /// The address of the text mode buffer
         address: u64,
@@ -432,7 +432,7 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the kernel with EDID information.
-    pub const EdidTag = packed struct {
+    pub const EdidTag = extern struct {
         tag: Tag = .{ .identifier = .edid },
         /// The number of bytes in the array
         edid_size: u64,
@@ -445,7 +445,7 @@ pub const Struct = packed struct {
 
     /// This tag provides the kernel with the entry point of the `stivale2_term_write()` function, if it was
     /// requested, and supported by the bootloader.
-    pub const TerminalTag = packed struct {
+    pub const TerminalTag = extern struct {
         tag: Tag = .{ .identifier = .terminal },
         flags: Flags,
         cols: u16,
@@ -516,7 +516,7 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the kernel with a list of modules loaded alongside the kernel.
-    pub const ModulesTag = packed struct {
+    pub const ModulesTag = extern struct {
         tag: Tag = .{ .identifier = .modules },
         /// Number of modules in the array
         module_count: u64,
@@ -527,7 +527,7 @@ pub const Struct = packed struct {
         }
     };
 
-    pub const Module = packed struct {
+    pub const Module = extern struct {
         /// Address where the module is loaded
         begin: u64,
         /// End address of the module
@@ -541,14 +541,14 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the kernel with the location of the ACPI RSDP structure
-    pub const RsdpTag = packed struct {
+    pub const RsdpTag = extern struct {
         tag: Tag = .{ .identifier = .rsdp },
         /// Address of the ACPI RSDP structure
         rsdp: u64,
     };
 
     /// This tag provides the kernel with the location of SMBIOS entry points in memory
-    pub const SmbiosTag = packed struct {
+    pub const SmbiosTag = extern struct {
         tag: Tag = .{ .identifier = .smbios },
         /// Flags are for future use and currently all unused
         flags: Flags,
@@ -563,14 +563,14 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the kernel with the current UNIX epoch
-    pub const EpochTag = packed struct {
+    pub const EpochTag = extern struct {
         tag: Tag = .{ .identifier = .epoch },
         /// UNIX epoch at boot, read from RTC
         epoch: u64,
     };
 
     /// This tag provides the kernel with info about the firmware
-    pub const FirmwareTag = packed struct {
+    pub const FirmwareTag = extern struct {
         tag: Tag = .{ .identifier = .firmware },
         flags: Flags,
 
@@ -582,14 +582,14 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the kernel with a pointer to the EFI system table if available
-    pub const EfiSystemTableTag = packed struct {
+    pub const EfiSystemTableTag = extern struct {
         tag: Tag = .{ .identifier = .efi_system_table },
         /// Address of the EFI system table
         system_table: u64,
     };
 
     /// This tag provides the kernel with a pointer to a copy of the executable file of the kernel
-    pub const KernelFileTag = packed struct {
+    pub const KernelFileTag = extern struct {
         tag: Tag = .{ .identifier = .kernel_file },
         /// Address of the kernel file
         kernel_file: [*]const u8,
@@ -597,7 +597,7 @@ pub const Struct = packed struct {
 
     /// This tag provides the kernel with a pointer to a copy of the executable file of the kernel, along with
     /// the size of the file
-    pub const KernelFileV2Tag = packed struct {
+    pub const KernelFileV2Tag = extern struct {
         tag: Tag = .{ .identifier = .kernel_file_v2 },
         /// Address of the kernel file
         kernel_file: [*]const u8,
@@ -611,7 +611,7 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the GUID and partition GUID of the volume from which the kernel was loaded, if available
-    pub const BootVolumeTag = packed struct {
+    pub const BootVolumeTag = extern struct {
         tag: Tag = .{ .identifier = .boot_volume },
         flags: Flags,
         /// GUID -- valid when flags.guid_valid is set
@@ -627,7 +627,7 @@ pub const Struct = packed struct {
             unused: u62,
         };
 
-        pub const Guid = packed struct {
+        pub const Guid = extern struct {
             a: u32,
             b: u16,
             c: u16,
@@ -636,13 +636,13 @@ pub const Struct = packed struct {
     };
 
     /// This tag provides the kernel with the slide that the bootloader has applied to the kernel's address
-    pub const KernelSlideTag = packed struct {
+    pub const KernelSlideTag = extern struct {
         tag: Tag = .{ .identifier = .kernel_slide },
         kernel_slide: u64,
     };
 
     /// This tag provides the kernel with info about a multiprocessor environment
-    pub const SmpTag = packed struct {
+    pub const SmpTag = extern struct {
         tag: Tag = .{ .identifier = .smp },
         flags: Flags,
         /// LAPIC ID of the BSP
@@ -663,7 +663,7 @@ pub const Struct = packed struct {
         };
     };
 
-    pub const SmpInfo = packed struct {
+    pub const SmpInfo = extern struct {
         /// ACPI processor UID as specified by MADT
         processor_id: u32,
         /// LAPIC ID as specified by MADT
@@ -684,21 +684,21 @@ pub const Struct = packed struct {
 
     /// This tag provides the kernel with the server ip that it was booted from, if the kernel has been booted
     /// via PXE
-    pub const PxeServerInfoTag = packed struct {
+    pub const PxeServerInfoTag = extern struct {
         tag: Tag = .{ .identifier = .pxe_server_info },
         /// Server IP in network byte order
         server_ip: u32,
     };
 
     /// This tag provides the kernel with the address of a memory mapped UART port
-    pub const Mmio32UartTag = packed struct {
+    pub const Mmio32UartTag = extern struct {
         tag: Tag = .{ .identifier = .mmio32_uart },
         /// The address of the UART port
         addr: u64,
     };
 
     /// This tag describes a device tree blob
-    pub const DtbTag = packed struct {
+    pub const DtbTag = extern struct {
         tag: Tag = .{ .identifier = .dtb },
         /// The address of the DTB
         addr: u64,
@@ -707,7 +707,7 @@ pub const Struct = packed struct {
     };
 
     /// This tag reports the start address of the higher half direct map (HHDM)
-    pub const HhdmTag = packed struct {
+    pub const HhdmTag = extern struct {
         tag: Tag = .{ .identifier = .hhdm },
         /// Beginning of the HHDM (virtual address)
         addr: u64,
