@@ -8,7 +8,7 @@ Visit [zigvale-barebones](https://github.com/ominitay/zigvale-barebones) for a b
 
 ## Add to your project
 
-Zigvale is available on [aquila](https://aquila.red/1/Ominitay/zigvale), [zpm](https://zig.pm/#/package/zigvale), and [astrolabe](https://astrolabe.pm/#/package/ominitay/zigvale/0.7.2).
+Zigvale is available on [aquila](https://aquila.red/1/Ominitay/zigvale), [zpm](https://zig.pm/#/package/zigvale), and [astrolabe](https://astrolabe.pm/#/package/ominitay/zigvale/0.7.3).
 
 ### Gyro
 
